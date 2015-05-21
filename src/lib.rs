@@ -68,6 +68,17 @@ pub fn every(interval: Duration) -> Stream<Duration> {
 }
 
 
+/// Integrate a signal over time.
+pub fn integrate<A, B, F>(a: &Signal<A>, initial: B, dt: Duration, f: F) -> Signal<B>
+    where A: Clone + Send + Sync + 'static,
+          B: Clone + Send + Sync + 'static,
+          F: Fn(B, A, Duration) -> B + Send + Sync + 'static,
+{
+    a.snapshot(&every(dt), |a, dt| (a, dt))
+        .scan(initial, move |b, (a, dt)| f(b, a, dt))
+}
+
+
 #[cfg(test)]
 mod test {
     use std::thread;

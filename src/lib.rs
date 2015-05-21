@@ -4,8 +4,9 @@ extern crate time;
 #[macro_use(lazy_static)]
 extern crate lazy_static;
 
-use carboxyl::Signal;
-use time::Tm;
+use std::thread;
+use carboxyl::{ Stream, Signal, Sink };
+use time::{ Duration, Tm };
 
 
 /// A macro for creating functions that return a handle to a static signal.
@@ -28,9 +29,37 @@ pub fn now() -> Signal<Tm> {
     static_signal!(Tm, time::now)
 }
 
+
 /// A signal of the current UTC time.
 pub fn now_utc() -> Signal<Tm> {
     static_signal!(Tm, time::now_utc)
+}
+
+
+/// A stream that regularly fires an event.
+///
+/// This function tries to regularly fire an event after the specified interval
+/// has passed. Of course, it might take longer than the specified time to
+/// process the event. In that case as many events as necessary will be skipped
+/// to keep up the pace.
+pub fn every(interval: Duration) -> Stream<()> {
+    // Setup sink and stream
+    let sink = Sink::new();
+    let stream = sink.stream();
+    // Spawn a thread
+    thread::spawn({
+        let mut last = time::now();
+        move || loop {
+            let togo = last + interval - time::now();
+            if togo < Duration::zero() {
+                sink.send(());
+                last = last + interval * (1 + togo.num_milliseconds() / interval.num_milliseconds()) as i32;
+            } else {
+                thread::sleep_ms(togo.num_milliseconds() as u32);
+            }
+        }
+    });
+    stream
 }
 
 
@@ -41,7 +70,7 @@ mod test {
     use carboxyl::{ Signal, Sink };
     use time::{ Duration, Tm };
 
-    use super::{ now, now_utc };
+    use super::{ now, now_utc, every };
 
 
     fn samples_equal<A, F: Fn() -> Signal<A>>(f: F)
@@ -85,5 +114,20 @@ mod test {
     #[test]
     fn now_utc_consistent_with_sleep_ms() {
         consistent_with_sleep_ms(now_utc);
+    }
+
+    #[test]
+    fn every_timing() {
+        let dt = Duration::microseconds(10000);
+        let ms = now().snapshot(&every(dt), |t, ()| t);
+        let mut events = ms.events();
+        // Throw away the first one, as timings will be somewhat off
+        events.next();
+        // Compare the next two allowing for some 5%-tolerance
+        let t1 = events.next().unwrap();
+        let t2 = events.next().unwrap();
+        let delta = t2 - t1;
+        assert!(delta < Duration::microseconds(10500));
+        assert!(delta > Duration::microseconds(9500));
     }
 }

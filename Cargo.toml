@@ -1,0 +1,15 @@
+[package]
+name = "carboxyl_time"
+version = "0.0.1"
+authors = ["Eduard Bopp <eduard.bopp@aepsil0n.de>"]
+description = "FRP interface"
+homepage = "https://github.com/aepsil0n/carboxyl_time"
+repository = "https://github.com/aepsil0n/carboxyl_time"
+readme = "README.md"
+keywords = ["frp", "reactive", "time"]
+license = "LGPL-3.0+"
+
+[dependencies]
+carboxyl = "0.0.11"
+clock_ticks = "0.0.5"
+lazy_static = "0.1.10"

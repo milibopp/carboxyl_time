@@ -7,7 +7,7 @@ use carboxyl_time::every;
 use time::Duration;
 
 fn main() {
-    for () in every(Duration::seconds(1)).events() {
-        println!("tick");
+    for dt in every(Duration::seconds(1)).events() {
+        println!("tick {:?}", dt);
     }
 }

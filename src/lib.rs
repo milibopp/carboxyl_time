@@ -38,11 +38,15 @@ pub fn now_utc() -> Signal<Tm> {
 
 /// A stream that regularly fires an event.
 ///
+/// The stream events describe the duration passed since the last occurence of
+/// an event (or for the first one the duration since the creation of the
+/// stream).
+///
 /// This function tries to regularly fire an event after the specified interval
 /// has passed. Of course, it might take longer than the specified time to
 /// process the event. In that case as many events as necessary will be skipped
 /// to keep up the pace.
-pub fn every(interval: Duration) -> Stream<()> {
+pub fn every(interval: Duration) -> Stream<Duration> {
     // Setup sink and stream
     let sink = Sink::new();
     let stream = sink.stream();
@@ -52,8 +56,9 @@ pub fn every(interval: Duration) -> Stream<()> {
         move || loop {
             let togo = last + interval - time::now();
             if togo < Duration::zero() {
-                sink.send(());
-                last = last + interval * (1 + togo.num_milliseconds() / interval.num_milliseconds()) as i32;
+                let passed = interval * (1 + togo.num_milliseconds() / interval.num_milliseconds()) as i32;
+                sink.send(passed);
+                last = last + passed;
             } else {
                 thread::sleep_ms(togo.num_milliseconds() as u32);
             }
@@ -119,7 +124,7 @@ mod test {
     #[test]
     fn every_timing() {
         let dt = Duration::microseconds(10000);
-        let ms = now().snapshot(&every(dt), |t, ()| t);
+        let ms = now().snapshot(&every(dt), |t, _| t);
         let mut events = ms.events();
         // Throw away the first one, as timings will be somewhat off
         events.next();

@@ -2,7 +2,7 @@
 name = "carboxyl_time"
 version = "0.0.1"
 authors = ["Emilia Bopp <contact@ebopp.de>"]
-description = "FRP interface"
+description = "FRP timing utilities"
 homepage = "https://github.com/milibopp/carboxyl_time"
 repository = "https://github.com/milibopp/carboxyl_time"
 readme = "README.md"

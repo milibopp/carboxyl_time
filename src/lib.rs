@@ -60,7 +60,7 @@ pub fn every(interval: Duration) -> Stream<Duration> {
                 sink.send(passed);
                 last = last + passed;
             } else {
-                thread::sleep_ms(togo.num_milliseconds() as u32);
+                thread::sleep(togo.to_std().unwrap());
             }
         }
     });
@@ -82,6 +82,7 @@ pub fn integrate<A, B, F>(a: &Signal<A>, initial: B, dt: Duration, f: F) -> Sign
 #[cfg(test)]
 mod test {
     use std::thread;
+    use std::time;
     use std::fmt::Debug;
     use carboxyl::{ Signal, Sink };
     use time::{ Duration, Tm };
@@ -116,7 +117,7 @@ mod test {
     fn consistent_with_sleep_ms<F: Fn() -> Signal<Tm>>(f: F) {
         let t0 = f().sample();
         for n in 0..5 {
-            thread::sleep_ms(n);
+            thread::sleep(time::Duration::from_millis(n));
             let dt = f().sample() - t0;
             assert!(dt > Duration::milliseconds(n as i64));
         }

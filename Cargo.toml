@@ -1,6 +1,6 @@
 [package]
 name = "carboxyl_time"
-version = "0.0.2"
+version = "0.0.3"
 authors = ["Emilia Bopp <contact@ebopp.de>"]
 description = "FRP timing utilities"
 homepage = "https://github.com/milibopp/carboxyl_time"
